@@ -1,0 +1,322 @@
+{
+  "apiVersion": 1,
+  "id": "at365.palette",
+  "name": "Applet.Palette.at365",
+  "displayName": "Palette",
+  "version": "0.2.0",
+  "minimumHostVersion": "0.255.0",
+  "updateRepository": "yukichi-7sai/Applet.Palette.at365",
+  "runtime": "node",
+  "entry": "index.cjs",
+  "icon": "palette",
+  "description": "%applet.description%",
+  "tagline": "%applet.tagline%",
+  "localization": {
+    "defaultLanguage": "ja"
+  },
+  "capabilities": [
+    "settings",
+    "storage",
+    "providers",
+    "input-palette"
+  ],
+  "commands": [
+    {
+      "id": "at365.palette.snippets.open",
+      "title": "%command.snippets%",
+      "description": "%command.snippets.description%",
+      "category": "%command.category%"
+    },
+    {
+      "id": "at365.palette.history.open",
+      "title": "%command.history%",
+      "description": "%command.history.description%",
+      "category": "%command.category%"
+    },
+    {
+      "id": "at365.palette.clipboard.settings",
+      "title": "%command.clipboardSettings%",
+      "category": "%command.category%"
+    }
+  ],
+  "settings": [
+    {
+      "key": "showGuide",
+      "title": "%setting.guide%",
+      "description": "%setting.guide.description%",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "includeHistory",
+      "title": "%setting.includeHistory%",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "snippetWidth",
+      "title": "%setting.width%",
+      "type": "number",
+      "integer": true,
+      "minimum": 260,
+      "default": 370,
+      "description": "%setting.width.description%"
+    },
+    {
+      "key": "snippetRows",
+      "title": "%setting.rows%",
+      "type": "number",
+      "integer": true,
+      "minimum": 1,
+      "default": 8,
+      "description": "%setting.rows.description%"
+    },
+    {
+      "key": "historyWidth",
+      "title": "%setting.width%",
+      "type": "number",
+      "integer": true,
+      "minimum": 260,
+      "default": 370,
+      "description": "%setting.width.description%"
+    },
+    {
+      "key": "historyRows",
+      "title": "%setting.rows%",
+      "type": "number",
+      "integer": true,
+      "minimum": 1,
+      "default": 8,
+      "description": "%setting.rows.description%"
+    }
+  ],
+  "settingActions": [
+    {
+      "title": "%command.clipboardSettings%",
+      "command": "at365.palette.clipboard.settings"
+    }
+  ],
+  "settingSections": [
+    {
+      "id": "common",
+      "title": "%section.common%",
+      "settings": [
+        "showGuide"
+      ]
+    },
+    {
+      "id": "snippets",
+      "title": "%section.snippets%",
+      "settings": [
+        "includeHistory",
+        "snippetWidth",
+        "snippetRows"
+      ]
+    },
+    {
+      "id": "history",
+      "title": "%section.history%",
+      "settings": [
+        "historyWidth",
+        "historyRows"
+      ],
+      "actions": [
+        "at365.palette.clipboard.settings"
+      ]
+    }
+  ],
+  "settingsProviders": [
+    {
+      "id": "snippets",
+      "key": "snippetStorage",
+      "title": "%snippets.title%",
+      "scope": "device",
+      "tabs": [
+        {
+          "id": "snippets",
+          "title": "%tab.snippets%"
+        }
+      ],
+      "actions": [
+        {
+          "id": "add",
+          "localOnly": true,
+          "permission": "read",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "edit",
+          "localOnly": true,
+          "permission": "read",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "refresh",
+          "localOnly": true,
+          "permission": "read",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "save",
+          "localOnly": true,
+          "permission": "write",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "delete",
+          "localOnly": true,
+          "permission": "write",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "toggle",
+          "localOnly": true,
+          "permission": "write",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        },
+        {
+          "id": "order",
+          "localOnly": true,
+          "permission": "write",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "rowId": {
+                "type": "string"
+              },
+              "values": {
+                "type": "object"
+              },
+              "expectedRevision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object"
+          }
+        }
+      ]
+    }
+  ],
+  "settingsTabs": [
+    {
+      "id": "behavior",
+      "title": "%tab.behavior%",
+      "sections": [
+        "common",
+        "snippets",
+        "history"
+      ]
+    },
+    {
+      "id": "snippets",
+      "title": "%tab.snippets%",
+      "sections": [],
+      "provider": "snippets/snippets"
+    }
+  ]
+}
