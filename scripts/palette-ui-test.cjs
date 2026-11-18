@@ -131,7 +131,9 @@ async function add(name, text) {
     await until(() => read().items[0].enabled, "toggle restored");
     const bytes = fs.readFileSync(storage, "utf8");
     await host.main.getByTestId(table + ":list:order").click();
-    await dialog()
+    const ordering = host.main.locator(".settings-inline-order");
+    await ordering.getByTestId("settings-order-handle:" + first).press("ArrowDown");
+    await ordering
       .getByRole("button", { name: "キャンセル", exact: true })
       .click();
     assert.equal(fs.readFileSync(storage, "utf8"), bytes);
