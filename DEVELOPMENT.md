@@ -4,6 +4,8 @@
 
 Node Applet。依存パッケージやビルドは不要。`index.cjs`が`palette.cjs`の実行インスタンスを公開する。
 
+小窓の描画と左右キーでの切り替えは`ui/`に置く。`palette.cjs`は次に開く時点で有効な画面を`context.inputPalette.openPopup`に渡す。本体は小窓の表示、元の入力先とキーの捕捉、Windows履歴の取得、貼り付けを担当する。
+
 定型文の設定UIは共通providerの一覧・編集・削除確認・並べ替えを使用し、登録内容はStorage APIで保存する。providerの予約キー`snippetStorage`へ本文や登録一覧を保存しない。動作設定は通常のSettings APIで扱う。
 
 ## 検証

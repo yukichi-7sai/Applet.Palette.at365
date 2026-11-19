@@ -139,40 +139,65 @@ function createPalette() {
     },
   });
   const open = async (kind) => {
-    let snapshot, emptyText;
-    try {
-      snapshot = await read();
-    } catch (error) {
-      if (kind !== "history") throw error;
-      // A damaged snippet file must not prevent access to Windows clipboard history.
-      snapshot = { document: { items: [] } };
-      emptyText = t("error.document");
-    }
+    const snippetsEnabled = context.settings.get("snippetsEnabled", true) !== false;
+    const historyEnabled = context.settings.get("historyEnabled", true) !== false;
+    if ((kind === "snippets" && !snippetsEnabled) || (kind === "history" && !historyEnabled)) return;
     const integer = (key, fallback, minimum) => {
       const value = context.settings.get(key, fallback);
       return Number.isSafeInteger(value) && value >= minimum ? value : fallback;
     };
-    return context.inputPalette.open({
-      kind,
-      entries: snapshot.document.items
-        .filter((row) => row.enabled)
-        .map(({ id, name, text }) => ({ id, name, text })),
-      titles: {
-        snippets: t("palette.snippets"),
-        history: t("palette.history"),
-      },
-      rows: {
-        snippets: integer("snippetRows", 8, 1),
-        history: integer("historyRows", 8, 1),
-      },
-      widths: {
-        snippets: integer("snippetWidth", 370, 260),
-        history: integer("historyWidth", 370, 260),
-      },
-      guide: context.settings.get("showGuide", true) === true,
+    const guide = context.settings.get("showGuide", true) === true;
+    const layout = { rowHeight: 50, chromeHeight: guide ? 96 : 69 };
+    const views = [];
+    if (snippetsEnabled) {
+      let items = [];
+      let emptyText = t("palette.empty");
+      try {
+        items = (await read()).document.items;
+      } catch (error) {
+        if (kind !== "history") throw error;
+        // Windows history stays available when the separate snippet store cannot be read.
+        emptyText = t("error.document");
+      }
+      views.push({
+        ...layout,
+        id: "snippets",
+        source: "items",
+        title: t("palette.snippets"),
+        rows: integer("snippetRows", 8, 1),
+        width: integer("snippetWidth", 370, 260),
+        manageLabel: t("palette.manage"),
+        emptyText,
+        entries: items.filter((row) => row.enabled).map(({ id, name, text }) => ({
+          id,
+          name,
+          text,
+          preview: text.slice(0, 160).replace(/\r\n|\r|\n/g, " "),
+        })),
+      });
+    }
+    if (historyEnabled) {
+      views.push({
+        ...layout,
+        id: "history",
+        source: "clipboard-history",
+        title: t("palette.history"),
+        rows: integer("historyRows", 8, 1),
+        width: integer("historyWidth", 370, 260),
+      });
+    }
+    return context.inputPalette.openPopup({
+      ui: "ui/input-palette.html",
+      initialView: kind,
+      views,
       includeHistory: context.settings.get("includeHistory", true) === true,
-      manageLabel: t("palette.manage"),
-      ...(emptyText ? { emptyText } : {}),
+      labels: {
+        resize: t("palette.resize"),
+        ...(guide ? {
+          keys: t(views.length > 1 ? "palette.keysWithSwitch" : "palette.keys"),
+          keyHelp: t("palette.keyHelp"),
+        } : {}),
+      },
     });
   };
   return {

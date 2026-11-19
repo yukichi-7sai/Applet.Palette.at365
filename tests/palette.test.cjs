@@ -60,7 +60,7 @@ async function fixture(t) {
     },
     commands: { register: (id, title, run) => commands.set(id, run) },
     inputPalette: {
-      open: async (request) => {
+      openPopup: async (request) => {
         opens.push(request);
         return { accepted: true };
       },
@@ -150,7 +150,7 @@ test("inline registration, edit, toggle, order and delete persist exact bodies o
   });
   await f.commands.get("at365.palette.snippets.open")();
   assert.deepEqual(
-    f.opens.at(-1).entries.map((row) => row.id),
+    f.opens.at(-1).views.find((view) => view.id === "snippets").entries.map((row) => row.id),
     [second.id],
   );
   assert.deepEqual(f.settings, {});
@@ -263,9 +263,10 @@ test("validation, failed writes, revoked requests and malformed files preserve d
   await assert.rejects(() => f.snapshot(), /ファイルを読み込めません/);
   assert.equal(f.files.get("shared"), "{broken");
   await f.commands.get("at365.palette.history.open")();
-  assert.equal(f.opens.at(-1).kind, "history");
-  assert.deepEqual(f.opens.at(-1).entries, []);
-  assert.match(f.opens.at(-1).emptyText, /ファイルを読み込めません/);
+  assert.equal(f.opens.at(-1).initialView, "history");
+  const snippets = f.opens.at(-1).views.find((view) => view.id === "snippets");
+  assert.deepEqual(snippets.entries, []);
+  assert.match(snippets.emptyText, /ファイルを読み込めません/);
 });
 
 test("large documents and candidate sets survive without truncation or a registration limit", async (t) => {
@@ -279,8 +280,8 @@ test("large documents and candidate sets survive without truncation or a registr
   }));
   f.files.set("shared", JSON.stringify({ schemaVersion: 1, items }));
   await f.commands.get("at365.palette.snippets.open")();
-  assert.equal(f.opens[0].entries.length, 300);
-  assert.equal(f.opens[0].entries[0].text, text);
+  assert.equal(f.opens[0].views[0].entries.length, 300);
+  assert.equal(f.opens[0].views[0].entries[0].text, text);
   assert.equal((await f.snapshot()).tabs[0].panels[0].rows.length, 300);
 });
 
@@ -308,9 +309,12 @@ test("new commands use independent display settings and never expose snippet dat
     includeHistory: false,
   });
   await f.commands.get("at365.palette.history.open")();
-  assert.deepEqual(f.opens[0].rows, { snippets: 4, history: 3 });
-  assert.deepEqual(f.opens[0].widths, { snippets: 480, history: 420 });
-  assert.equal(f.opens[0].guide, false);
+  assert.equal(f.opens[0].ui, "ui/input-palette.html");
+  assert.deepEqual(f.opens[0].views.map(({id, rows, width}) => [id, rows, width]), [
+    ["snippets", 4, 480],
+    ["history", 3, 420],
+  ]);
+  assert.equal(f.opens[0].labels.keys, undefined);
   assert.equal(f.opens[0].includeHistory, false);
   assert.equal(
     (await f.request("prepare", { value: ["body"] })).issue.kind,
@@ -321,4 +325,33 @@ test("new commands use independent display settings and never expose snippet dat
       (command) => !command.automation && !command.aliases,
     ),
   );
+});
+
+test("disabled palettes stay closed through either command and are omitted from switching", async (t) => {
+  const f = await fixture(t);
+  const openSnippets = f.commands.get("at365.palette.snippets.open");
+  const openHistory = f.commands.get("at365.palette.history.open");
+  await openSnippets();
+  assert.deepEqual(f.opens.at(-1).views.map(({id}) => id), ["snippets", "history"]);
+  assert.match(f.opens.at(-1).labels.keys, /←→/);
+
+  f.settings.historyEnabled = false;
+  await openHistory();
+  assert.equal(f.opens.length, 1);
+  await openSnippets();
+  assert.deepEqual(f.opens.at(-1).views.map(({id}) => id), ["snippets"]);
+  assert.doesNotMatch(f.opens.at(-1).labels.keys, /←→/);
+  assert.equal(f.opens.at(-1).includeHistory, true);
+
+  f.settings.snippetsEnabled = false;
+  await openSnippets();
+  await openHistory();
+  assert.equal(f.opens.length, 2);
+
+  f.files.set("shared", "{broken");
+  f.settings.historyEnabled = true;
+  await openHistory();
+  assert.deepEqual(f.opens.at(-1).views.map(({id}) => id), ["history"]);
+  assert.doesNotMatch(f.opens.at(-1).labels.keys, /←→/);
+  assert.equal(f.files.get("shared"), "{broken");
 });

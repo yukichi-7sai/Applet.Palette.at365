@@ -1,4 +1,4 @@
-param([string]$HostRoot = (Join-Path $PSScriptRoot '..\..\AppDock.at365'))
+﻿param([string]$HostRoot = (Join-Path $PSScriptRoot '..\..\AppDock.at365'))
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskHost = [IO.Path]::GetFullPath($HostRoot)
@@ -17,15 +17,20 @@ function Get-PaletteFileHash([string]$Path) {
         $taskHasher.Dispose()
     }
 }
+$taskFiles = @(
+    'extension.json', 'index.cjs', 'palette.cjs', 'resources\translations\applet.json',
+    'ui\input-palette.html', 'ui\palette.css', 'ui\palette.js'
+)
 foreach ($taskDirectory in @($taskStage, $taskOutput)) {
-    New-Item -ItemType Directory -Path (Join-Path $taskDirectory 'resources\translations') -Force | Out-Null
-    foreach ($taskFile in @('extension.json', 'index.cjs', 'palette.cjs', 'resources\translations\applet.json')) {
+    foreach ($taskFile in $taskFiles) {
+        $taskParent = Split-Path -Parent (Join-Path $taskDirectory $taskFile)
+        New-Item -ItemType Directory -Path $taskParent -Force | Out-Null
         Copy-Item -LiteralPath (Join-Path $taskRoot $taskFile) -Destination (Join-Path $taskDirectory $taskFile) -Force
     }
 }
 & (Join-Path $taskHost 'scripts\pack-applet-update.ps1') -SourceDirectory $taskStage -OutputDirectory $taskOutput
 if (-not $?) { throw 'Applet update package failed' }
-foreach ($taskFile in @('extension.json', 'index.cjs', 'palette.cjs', 'resources\translations\applet.json')) {
+foreach ($taskFile in $taskFiles) {
     if ((Get-PaletteFileHash (Join-Path $taskRoot $taskFile)) -ne (Get-PaletteFileHash (Join-Path $taskOutput $taskFile))) {
         throw ('Published file mismatch: ' + $taskFile)
     }

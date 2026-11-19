@@ -100,13 +100,13 @@ const snapshot = () =>
       bounds: h?.window?.getBounds(),
       session: h?.active?.id,
       view: h?.active?.view,
-      kind: h?.active?.kind,
+      kind: h?.active?.current.id,
       selected: h?.active?.selected,
       resizing: !!h?.active?.resizing,
       open: !!h?.active,
       pastes: test.pastes,
       captures: test.captures,
-      guide: h?.active?.guide,
+      guide: Boolean(h?.active?.request.labels?.keys),
     };
   });
 async function open(kind = "snippets") {
@@ -132,7 +132,7 @@ async function open(kind = "snippets") {
       ),
     kind,
   );
-  panel = await host.page("/input-palette.html");
+  panel = await host.page("/extensions/at365.palette/ui/input-palette.html");
   await panel
     .getByRole("button", { name: "パレットのサイズを変更", exact: true })
     .waitFor();

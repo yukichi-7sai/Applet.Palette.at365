@@ -3,7 +3,15 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 function install(profile, items, settings = {}) {
   const destination = path.join(profile, 'extensions/at365.palette');
-  for (const file of ['extension.json', 'index.cjs', 'palette.cjs', 'resources/translations/applet.json']) {
+  for (const file of [
+    'extension.json',
+    'index.cjs',
+    'palette.cjs',
+    'resources/translations/applet.json',
+    'ui/input-palette.html',
+    'ui/palette.css',
+    'ui/palette.js',
+  ]) {
     const target = path.join(destination, file);
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.copyFileSync(path.join(root, file), target);

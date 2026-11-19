@@ -3,8 +3,8 @@
   "id": "at365.palette",
   "name": "Applet.Palette.at365",
   "displayName": "Palette",
-  "version": "0.2.0",
-  "minimumHostVersion": "0.255.0",
+  "version": "0.3.0",
+  "minimumHostVersion": "0.270.0",
   "updateRepository": "yukichi-7sai/Applet.Palette.at365",
   "runtime": "node",
   "entry": "index.cjs",
@@ -44,6 +44,20 @@
       "key": "showGuide",
       "title": "%setting.guide%",
       "description": "%setting.guide.description%",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "snippetsEnabled",
+      "title": "%setting.enabled%",
+      "description": "%setting.snippetsEnabled.description%",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "historyEnabled",
+      "title": "%setting.enabled%",
+      "description": "%setting.historyEnabled.description%",
       "type": "boolean",
       "default": true
     },
@@ -108,6 +122,7 @@
       "id": "snippets",
       "title": "%section.snippets%",
       "settings": [
+        "snippetsEnabled",
         "includeHistory",
         "snippetWidth",
         "snippetRows"
@@ -117,6 +132,7 @@
       "id": "history",
       "title": "%section.history%",
       "settings": [
+        "historyEnabled",
         "historyWidth",
         "historyRows"
       ],

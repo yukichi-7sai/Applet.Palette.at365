@@ -42,14 +42,19 @@ const checks = [];
 let host,
   success = false;
 const dialog = () => host.main.locator("dialog[open]").last();
-const field = (key) =>
+const item = (key) =>
   host.main.locator(
     '[data-setting-item="' +
       encodeURIComponent("applet:at365.palette") +
       "/" +
       encodeURIComponent("setting:" + key) +
-      '"] input',
+      '"]',
   );
+const field = (key) => item(key).locator("input");
+const usePalette = (key) => item(key).getByRole("switch", { name: "パレットを使う" });
+const popupPath = "/extensions/at365.palette/ui/input-palette.html";
+const openPalette = (kind) => host.main.evaluate((kind) =>
+  window.dock.executeCommand(`at365.palette.${kind}.open`), kind);
 const snapshot = () => host.main.evaluate(() => window.dock.snapshot());
 const navigate = async () => {
   await host.main.evaluate(() =>
@@ -155,6 +160,20 @@ async function add(name, text) {
     );
 
     await host.main.getByRole("button", { name: "動作設定", exact: true }).click();
+    for (const key of ["snippetsEnabled", "historyEnabled"]) {
+      assert.equal(await usePalette(key).getAttribute("aria-checked"), "true");
+      await usePalette(key).click();
+    }
+    await settleSettings(host.main);
+    await openPalette("snippets");
+    await openPalette("history");
+    assert(
+      !await host.app.evaluate(({ BrowserWindow }, suffix) =>
+        BrowserWindow.getAllWindows().some((win) => win.webContents.getURL().endsWith(suffix)),
+        popupPath),
+    );
+    await usePalette("snippetsEnabled").click();
+    await settleSettings(host.main);
     assert.equal(await field("snippetWidth").inputValue(), "370");
     assert.equal(await field("historyWidth").inputValue(), "370");
     assert.equal(await field("snippetRows").inputValue(), "8");
@@ -167,14 +186,14 @@ async function add(name, text) {
     });
     await host.main.bringToFront();
     await field("snippetRows").focus();
-    await host.main.evaluate(() =>
-      window.dock.executeCommand("at365.palette.snippets.open"),
-    );
-    let panel = await host.page("/input-palette.html");
+    await openPalette("snippets");
+    let panel = await host.page(popupPath);
     await panel
       .locator('.choices [data-index="0"] strong')
       .filter({ hasText: "変更した名前" })
       .waitFor();
+    assert.doesNotMatch(await panel.locator("footer").innerText(), /←→/);
+    await panel.screenshot({ path: path.join(profile, "palette-single-view.png") });
     await panel
       .getByRole("button", { name: "Paletteの設定を開く", exact: true })
       .click();
@@ -183,6 +202,7 @@ async function add(name, text) {
     checks.push(
       "Real Applet command supplies candidates through the packaged host; management opens its own settings",
     );
+    checks.push("Both switches default ON, both OFF keeps the popup closed, and a single view omits the horizontal guide");
 
     await navigate();
     await host.resize(900, 620);
@@ -226,6 +246,8 @@ async function add(name, text) {
     await host.main.getByText("このPC", { exact: true }).waitFor();
     await host.main.getByRole("button", { name: "動作設定", exact: true }).click();
     assert.equal(await field("snippetWidth").inputValue(), "480");
+    assert.equal(await usePalette("snippetsEnabled").getAttribute("aria-checked"), "true");
+    assert.equal(await usePalette("historyEnabled").getAttribute("aria-checked"), "false");
     checks.push(
       "Shared/device files remain independent; real restart retains the selected scope, data and display setting",
     );
@@ -235,14 +257,14 @@ async function add(name, text) {
     await host.main.evaluate(() =>
       window.dock.executeCommand("at365.palette.snippets.open"),
     );
-    panel = await host.page("/input-palette.html");
+    panel = await host.page(popupPath);
     await panel
       .locator('.choices [data-index="0"] strong')
       .filter({ hasText: "このPC" })
       .waitFor();
     await host.main.evaluate(() => window.dock.toggleExtension('at365.palette', false));
     await until(
-      async () => (await panel.locator("header").count()) === 0,
+      () => panel.isClosed(),
       "stopping owner closes palette",
     );
     await until(
