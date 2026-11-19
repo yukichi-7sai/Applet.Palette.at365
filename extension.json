@@ -3,8 +3,8 @@
   "id": "at365.palette",
   "name": "Applet.Palette.at365",
   "displayName": "Palette",
-  "version": "0.3.0",
-  "minimumHostVersion": "0.270.0",
+  "version": "0.4.0",
+  "minimumHostVersion": "0.271.0",
   "updateRepository": "yukichi-7sai/Applet.Palette.at365",
   "runtime": "node",
   "entry": "index.cjs",
@@ -119,18 +119,9 @@
       ]
     },
     {
-      "id": "snippets",
-      "title": "%section.snippets%",
-      "settings": [
-        "snippetsEnabled",
-        "includeHistory",
-        "snippetWidth",
-        "snippetRows"
-      ]
-    },
-    {
       "id": "history",
       "title": "%section.history%",
+      "description": "%section.history.description%",
       "settings": [
         "historyEnabled",
         "historyWidth",
@@ -138,6 +129,17 @@
       ],
       "actions": [
         "at365.palette.clipboard.settings"
+      ]
+    },
+    {
+      "id": "snippets",
+      "title": "%section.snippets%",
+      "description": "%section.snippets.description%",
+      "settings": [
+        "snippetsEnabled",
+        "includeHistory",
+        "snippetWidth",
+        "snippetRows"
       ]
     }
   ],
@@ -324,8 +326,8 @@
       "title": "%tab.behavior%",
       "sections": [
         "common",
-        "snippets",
-        "history"
+        "history",
+        "snippets"
       ]
     },
     {

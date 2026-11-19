@@ -15,6 +15,9 @@ const { settingsPage } = require(
 const { settleSettings } = require(
   path.join(hostRoot, "scripts/settings-immediate-helper.cjs"),
 );
+const { overlayPage, overlayClosed } = require(
+  path.join(hostRoot, "scripts/shell-overlay-helper.cjs"),
+);
 const artifacts = path.join(root, ".artifacts");
 fs.mkdirSync(artifacts, { recursive: true });
 const profile = fs.mkdtempSync(path.join(artifacts, "palette-ui-"));
@@ -160,6 +163,45 @@ async function add(name, text) {
     );
 
     await host.main.getByRole("button", { name: "動作設定", exact: true }).click();
+    const headingNames = ["クリップボード履歴", "定型文パレット"];
+    const sections = host.main.locator("section.settings-section").filter({
+      has: host.main.getByRole("heading", {
+        name: /^(クリップボード履歴|定型文パレット)$/,
+      }),
+    });
+    await sections.nth(1).waitFor();
+    assert.deepEqual(await sections.locator("h2").allTextContents(), headingNames);
+    for (const [index, kind] of ["history", "snippets"].entries()) {
+      const id = `at365.palette.${kind}.open`;
+      const title = index === 0 ? "クリップボード履歴パレット" : "定型文パレット";
+      await sections.nth(index)
+        .getByRole("button", {
+          name: `${title}を開くをコマンドパレットで表示`,
+          exact: true,
+        })
+        .click();
+      const commandOverlay = await overlayPage(host.main);
+      await commandOverlay
+        .locator(`[role=option][data-command-id="${id}"][aria-selected=true]`)
+        .waitFor();
+      await commandOverlay.getByRole("combobox").press("Escape");
+      await overlayClosed(host.main);
+    }
+    const snippetsTab = "setting:applet:at365.palette:provider:snippets:snippets";
+    const snippetsLink = sections.nth(1).getByTestId("page-link:" + snippetsTab);
+    assert.equal(await snippetsLink.innerText(), "定型文");
+    await snippetsLink.press("Enter");
+    await host.main.getByRole("table", { name: "定型文", exact: true }).waitFor();
+    await until(() =>
+      host.main.evaluate(() =>
+        document.activeElement?.getAttribute("data-setting-item") ===
+        "applet%3Aat365.palette/provider%3Asnippets%3Asnippets"),
+      "focus moves to the snippets tab",
+    );
+    await host.main.getByRole("button", { name: "動作設定", exact: true }).click();
+    checks.push(
+      "History precedes snippets, both command links preselect their command, and Enter opens and focuses the snippets tab",
+    );
     for (const key of ["snippetsEnabled", "historyEnabled"]) {
       assert.equal(await usePalette(key).getAttribute("aria-checked"), "true");
       await usePalette(key).click();
